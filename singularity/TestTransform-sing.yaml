@@ -18,7 +18,7 @@ storage: # mount the storage container
 environment: # select the image, clone your code, install the packages
   image: base/job/pytorch/acpt-2.1.2-cuda11.8:20240320T154353549
   setup:
-    - git clone https://github.com/Zenobiaql/ovla.git
+    - git clone https://github.com/Zenobiaql/ovla.git &&  cd ovla/rlds-dataset-builder/ && pip install -r requirements.txt
   registry: singularitybase.azurecr.io # cached base images under amlt-sing/* seems not usable now, use singularitybase instead
 
 code:
@@ -28,7 +28,7 @@ data:
   storage_id: my_output
 
 jobs:
-  - name: test ovla upload # the job name you will see on the portal. Though not important, you'd better carefully set it for clarity.
+  - name: test rlds dataset transform # the job name you will see on the portal. Though not important, you'd better carefully set it for clarity.
     sku: ${NODES}x${MEM}G${GPUS}-A100-IB # determinate the GPU you will use, please refer to the official docs for more information 
     process_count_per_node: 1 # usually 1
     sla_tier: Premium # Premium, Standard, Basic. corresponding to the priority.
@@ -41,5 +41,6 @@ jobs:
         SHARED_MEMORY_PERCENT: 0.5 # value in [0,1], change if necessary, shared memory size
 
     command:
-      - cd ovla/test-sing/
-      - python decorator-test.py
+      - cd ovla/rlds-dataset-builder/example_dataset
+      - python3 create_example_data.py
+      - tfds build --data_dir /mnt/data-qilin/ovla/dataset/0114-TestRLDS/
