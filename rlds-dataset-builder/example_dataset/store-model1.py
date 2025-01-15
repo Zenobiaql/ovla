@@ -11,5 +11,6 @@ embeddings = embed(sentences)
 
 print(embeddings)
 
-model_path = "/mnt/data-qilin/ovla/dataset/0114-TestRLDS/google-universal-sentence-encoder-large-5"
+model_path = "~/model_tmp/google-usel-5"
 tf.saved_model.save(embed, model_path)
+print(f"Model saved to {model_path}")
