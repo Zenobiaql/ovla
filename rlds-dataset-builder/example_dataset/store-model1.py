@@ -1,4 +1,5 @@
 import tensorflow_hub as hub
+import tensorflow as tf
 
 # 下载并加载 Universal Sentence Encoder 模型
 model_url = "https://tfhub.dev/google/universal-sentence-encoder-large/5"
