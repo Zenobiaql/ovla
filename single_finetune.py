@@ -92,6 +92,7 @@ class FinetuneConfig:
 
     # Directory Paths
     data_root_dir: Path = Path("datasets/open-x-embodiment")        # Path to Open-X dataset directory
+    """it is our own dataset"""
     pizza_dir: Path = Path("/mnt/data-rundong/robot_datasets/pizza/task_04/pizza_dataset_dataset/1.0.0/")                        # Path to Pizza dataset directory
     dataset_name: str = "pizza"                                # Name of fine-tuning dataset (e.g., `droid_wipe`)
     run_root_dir: Path = Path("/mnt/data-rundong/openvla/runs")                               # Path to directory to store logs & checkpoints
@@ -137,6 +138,7 @@ def finetune(cfg: FinetuneConfig) -> None:
     device_id = "cuda:" + cfg.device
     torch.cuda.set_device(device_id)
     torch.cuda.empty_cache()
+    """Would the model be finetuned on a single GPU?"""
 
     # Configure Unique Experiment ID & Log Directory
     task_id = cfg.task_id
@@ -190,6 +192,7 @@ def finetune(cfg: FinetuneConfig) -> None:
         vla = get_peft_model(vla, lora_config)
         vla.print_trainable_parameters()
 
+    """If the model should be finetuned on multiple GPU, wrap the model with DDP"""
     # Wrap VLA in PyTorch DDP Wrapper for Multi-GPU Training
     # vla = DDP(vla, device_ids=[device_id], find_unused_parameters=True, gradient_as_bucket_view=True)
 
