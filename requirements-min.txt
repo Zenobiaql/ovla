@@ -4,7 +4,7 @@ torch>=2.2.0
 torchvision>=0.16.0
 transformers==4.40.1
 peft==0.11.1
-draccus==0.8.0
+draccus
 tensorflow
 tensorflow_datasets
 accelerate>=0.25.0
@@ -12,4 +12,4 @@ wandb
 pathlib
 tqdm
 rich
-dlimp @ git+https://github.com/moojink/dlimp_openvla
+dlimp
