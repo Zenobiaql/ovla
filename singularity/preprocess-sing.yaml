@@ -42,4 +42,4 @@ jobs:
 
     command:
       - cd ovla/dataset/test_trajectory_data
-      - python3 collect_all_trajectory.py --config_path=config.yaml
+      - python3 collect_all_trajectory.py --config_path="collect_config.yaml"
