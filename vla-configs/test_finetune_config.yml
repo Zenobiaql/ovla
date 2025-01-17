@@ -1,0 +1,34 @@
+vla_path: "openvla/openvla-7b"                            # Path to OpenVLA model (on HuggingFace Hub)
+
+# Directory Paths
+data_root_dir: Path("datasets/open-x-embodiment")        # Path to Open-X dataset directory
+pizza_dir: Path("/mnt/data-wangxiaofa/simpler_test_data_run/")                        # Path to Pizza dataset directory
+dataset_name: str = "pizza"                                # Name of fine-tuning dataset (e.g., `droid_wipe`)
+run_root_dir: Path("/mnt/data-qilin/ovla/single_finetune/runs/")                               # Path to directory to store logs & checkpoints
+adapter_tmp_dir: Path("/mnt/data-qilin/ovla/single_finetune/adapter-tmp")                     # Temporary directory for LoRA weights before fusing
+task_id: "test"                                       # Task ID for Pizza dataset finetune
+
+# Fine-tuning Parameters
+epochs: 30                                                 # Number of fine-tuning epochs
+batch_size: 8                                        # Fine-tuning batch size
+max_steps: 318990                                        # Max number of fine-tuning steps
+save_steps: 1000                                          # Interval for checkpoint saving
+learning_rate: 1.5e-5                                     # Fine-tuning learning rate
+grad_accumulation_steps: 2                             # Gradient accumulation steps
+image_aug: True                                          # Whether to train with image augmentations
+shuffle_buffer_size: 100_000                              # Dataloader shuffle buffer size (can reduce if OOM)
+
+# LoRA Arguments
+use_lora: True                                           # Whether to use LoRA fine-tuning
+lora_rank: 16                                             # Rank of LoRA weight matrix
+lora_dropout: 0.0                                       # Dropout applied to LoRA weights
+use_quantization: False                                  # Whether to 4-bit quantize VLA for LoRA fine-tuning
+                                                                    #   => CAUTION: Reduces memory but hurts performance
+
+# Tracking Parameters
+wandb_project: "openvla"                                  # Name of W&B project to log to (use default!)
+wandb_entity: "stanford-voltron"                          # Name of entity to log under
+
+# fmt: on
+# cuda Parameters
+device: "0"                          

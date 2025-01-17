@@ -1,0 +1,50 @@
+description: Test single finetune pipeline.
+env_defaults:
+  NODES: 1 # The number of nodes you want to use
+  GPUS: 8 # number of gpus per node
+  MEM: 40 # gpu memory of each gpu, not important
+
+target:
+  service: sing # for singularity, no need to change
+  workspace_name: wsgcrrbt # our workspace to use singularity, no need to change
+  name: msroctovc # change for different kinds of gpus. The detailed quota can be checked with command "amlt ti sing -v"
+
+storage: # mount the storage container
+  data:
+    storage_account_name: azsussc
+    container_name: v-wangxiaofa
+    mount_dir: /mnt/data-wangxiaofa
+    is_output: false
+  my_output:
+    storage_account_name: azsussc
+    container_name: v-qilinzhang
+    mount_dir: /mnt/data-qilinzhang
+
+environment: # select the image, clone your code, install the packages
+  image: base/job/pytorch/acpt-2.1.2-cuda11.8:20240320T154353549
+  setup:
+    - git clone https://github.com/Zenobiaql/ovla.git && cd ovla && pip install -r requirements-min.txt
+  registry: singularitybase.azurecr.io # cached base images under amlt-sing/* seems not usable now, use singularitybase instead
+
+code:
+  local_dir: $CONFIG_DIR/
+
+data:
+  storage_id: my_output
+
+jobs:
+  - name: single finetune test # the job name you will see on the portal. Though not important, you'd better carefully set it for clarity.
+    sku: ${NODES}x${MEM}G${GPUS}-A100-IB # determinate the GPU you will use, please refer to the official docs for more information 
+    process_count_per_node: 1 # usually 1
+    sla_tier: Premium # Premium, Standard, Basic. corresponding to the priority.
+    execution_mode: basic
+    identity: managed
+    submit_args:
+      env:
+        AMLT_DOCKERFILE_TEMPLATE: default
+        _AZUREML_SINGULARITY_JOB_UAI: /subscriptions/3289a5dd-b901-4b63-9562-bbbdfffba9de/resourcegroups/ws/providers/Microsoft.ManagedIdentity/userAssignedIdentities/wsgcrrbt-identity
+        SHARED_MEMORY_PERCENT: 0.5 # value in [0,1], change if necessary, shared memory size
+
+    command:
+      - cd ovla
+      - python3 single_finetune.py --config_path=vla-configs/test_finetune_config.yml

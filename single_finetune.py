@@ -43,7 +43,7 @@ from prismatic.vla.datasets import RLDSBatchTransform, RLDSDataset
 from prismatic.vla.datasets.rlds.utils.data_utils import save_dataset_statistics
 
 #import pizzadataset
-from pizza_dataset import PizzaDataset
+from test_dataset import PizzaDataset
 
 # Sane Defaults
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
