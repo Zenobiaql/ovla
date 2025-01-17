@@ -47,4 +47,4 @@ jobs:
 
     command:
       - cd ovla
-      - python3 single_finetune.py --config_path=vla-configs/test_finetune_config.yml
+      - torchrun --standalone --nnodes 1 --nproc-per-node 1 ingle_finetune.py --config_path=vla-configs/test_finetune_config.yml
