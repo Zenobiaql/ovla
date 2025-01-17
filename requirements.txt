@@ -211,3 +211,4 @@ yt-dlp==2024.7.16
 ytmusicapi==1.7.5
 zipp==3.21.0
 zope.interface==5.4.0
+tensorflow-graphics
