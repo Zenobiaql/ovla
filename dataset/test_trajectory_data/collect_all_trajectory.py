@@ -33,3 +33,6 @@ def data_accumulator(cfg: PreprocessConfig)->None:
                 data.append(data_pack)
                 
             print(data[0],'\n',data[-1])
+            
+if __name__ == '__main__':
+    data_accumulator()
