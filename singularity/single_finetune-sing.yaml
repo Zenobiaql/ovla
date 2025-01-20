@@ -28,8 +28,6 @@ environment: # select the image, clone your code, install the packages
     - conda init bash
     - source ~/.bashrc
     - conda create --name openvla python=3.10.12
-    - conda init
-    - source ~/.bashrc
     - conda activate openvla
     - git clone https://github.com/Zenobiaql/ovla.git
     - cd ovla
