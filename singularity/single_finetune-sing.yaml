@@ -24,7 +24,7 @@ environment: # select the image, clone your code, install the packages
   image: base/job/pytorch/acpt-2.1.2-cuda11.8:20240320T154353549
   setup:
     - wget https://repo.anaconda.com/archive/Anaconda3-2023.07-Linux-x86_64.sh
-    - yes | bash Anaconda3-2023.07-Linux-x86_64.sh
+    - y | bash Anaconda3-2023.07-Linux-x86_64.sh
     - conda init
     - source ~/.bashrc
     - conda create --name openvla python=3.10.12
