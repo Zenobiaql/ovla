@@ -13,6 +13,7 @@
 <hr style="border: 2px solid gray;"></hr>
 
 ## Latest Updates
+- [2024-10-15] Added a [VLA Performance Troubleshooting](#vla-performance-troubleshooting) section to the README with best practices for debugging poor VLA performance after fine-tuning.
 - [2024-09-04] Added LIBERO simulation benchmark fine-tuning experiments to paper (see v2 on [arXiv](https://arxiv.org/abs/2406.09246));
   added instructions for reproducing OpenVLA results in [LIBERO Simulation Benchmark Evaluations](#libero-simulation-benchmark-evaluations) section
 - [2024-08-14] Added new section, [Evaluating OpenVLA](#evaluating-openvla), with instructions for running BridgeData V2 WidowX robot evals
@@ -570,7 +571,7 @@ python experiments/robot/libero/run_libero_eval.py \
 ```
 
 Notes:
-* The evaluation script will run 500 trials by default (10 tasks x 500 episodes each). You can modify the number of
+* The evaluation script will run 500 trials by default (10 tasks x 50 episodes each). You can modify the number of
   trials per task by setting `--num_trials_per_task`. You can also change the random seed via `--seed`.
 * **NOTE: Setting `--center_crop True` is important** because we fine-tuned OpenVLA with random crop augmentations
   (we took a random crop with 90% area in every training sample, so at test time we simply take the center 90% crop).
@@ -596,6 +597,27 @@ High-level overview of repository/project file-tree:
 + `Makefile` - Top-level Makefile (by default, supports linting - checking & auto-fix); extend as needed.
 + `pyproject.toml` - Full project configuration details (including dependencies), as well as tool configurations.
 + `README.md` - You are here!
+
+---
+
+
+# VLA Performance Troubleshooting
+
+In this section we cover best practices for debugging poor VLA performance after fine-tuning on your target domain robot dataset.
+
+**Note**: OpenVLA typically requires fine-tuning on a small demonstration dataset (~100 demos) from your target domain robot. Out-of-the-box, it only works well on domains from the training dataset.
+
+**Sanity checks**:
+- replay the actions from a demonstration from your fine-tuning dataset and make sure that the robot can execute the task successfully (this ensures that your data collection pipeline is correct)
+- once you fine-tuned a model, load the model in your inference pipeline (as if you would run it to control the robot), but feed images from the fine-tuning dataset into the model (pretending they come from the robot) and verify that you can reproduce the token accuracies / L1 errors from training (this ensures that your inference pipeline is correct)
+
+**Best practices for fine-tuning data collection**:
+If your setup passed the above two sanity checks, the issue may not be in model training, but in the data you fine-tuned the model with. Some best practices for data collection:
+- *Collect at a control frequency around 5-10Hz.* OpenVLA is not trained with action chunking, empirically the model struggles with high-frequency data. If your robot setup uses a high-frequency controller (eg 50 Hz), consider downsampling your actions to 5Hz. Verify first that your robot can still solve the task when using 5Hz actions (ie repeat sanity check (1) above with 5Hz actions)
+- *Avoid pauses / small actions during data collection.* Because OpenVLA is trained without action chunking, the model can be sensitive to idle actions in the fine-tuning data. If your data contains steps in which the robot barely moves, the model may "get stuck" in these steps at inference time. Try to collect fine-tuning demonstrations with continuous, slow movement.
+- *Ensure sufficient data coverage.* If you plan to test the model with some variation, e.g. different initial positions of objects, make sure that your fine-tuning data contains sufficient diversity of such conditions as well, e.g. shows demonstrations with diverse initial conditions.
+- *Use consistent task strategies during data collection.* This is not a hard constraint, but may make your life easier. Try to demonstrate tasks in consistent ways, e.g. approach objects from the same side, perform sub-steps in the same order even if they could be performed in arbitrary sequences. Being consistent gives you a less multi-modal fine-tuning dataset, which makes the modeling problem easier.
+
 
 ---
 
