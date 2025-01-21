@@ -2,7 +2,7 @@ vla_path: "openvla/openvla-7b"                            # Path to OpenVLA mode
 
 # Directory Paths
 data_root_dir: Path("datasets/open-x-embodiment")        # Path to Open-X dataset directory
-pizza_dir: Path("/mnt/data-wangxiaofa/simpler_test_data_run/")                        # Path to Pizza dataset directory
+pizza_dir: Path("/dataset_tmp/simpler_test_data_run/")                        # Path to Pizza dataset directory
 dataset_name: str = "pizza"                                # Name of fine-tuning dataset (e.g., `droid_wipe`)
 run_root_dir: Path("~/ovla/single_finetune/runs/")                               # Path to directory to store logs & checkpoints
 adapter_tmp_dir: Path("~/ovla/single_finetune/adapter-tmp")                     # Temporary directory for LoRA weights before fusing
