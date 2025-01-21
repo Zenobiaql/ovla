@@ -23,12 +23,6 @@ storage: # mount the storage container
 environment: # select the image, clone your code, install the packages
   image: base/job/pytorch/acpt-2.1.2-cuda11.8:20240320T154353549
   setup:
-    - wget https://repo.anaconda.com/archive/Anaconda3-2023.07-2-Linux-x86_64.sh
-    - echo | bash Anaconda3-2023.07-2-Linux-x86_64.sh
-    - y
-    - conda init bash
-    - source ~/.bashrc
-    - echo $$PATH
     - conda create --name openvla python=3.10.12
     - y
     - conda activate openvla
