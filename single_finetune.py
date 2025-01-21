@@ -88,16 +88,16 @@ def get_logger(file_path):
 @dataclass
 class FinetuneConfig:
     # fmt: off
-    vla_path: str = "openvla/openvla-7b"                            # Path to OpenVLA model (on HuggingFace Hub)
+    vla_path: str                     # Path to OpenVLA model (on HuggingFace Hub)
 
     # Directory Paths
-    data_root_dir: Path = Path("datasets/open-x-embodiment")        # Path to Open-X dataset directory
+    data_root_dir: Path        # Path to Open-X dataset directory
     """it is our own dataset"""
-    pizza_dir: Path = Path("/mnt/data-rundong/robot_datasets/pizza/task_04/pizza_dataset_dataset/1.0.0/")                        # Path to Pizza dataset directory
-    dataset_name: str = "pizza"                                # Name of fine-tuning dataset (e.g., `droid_wipe`)
-    run_root_dir: Path = Path("/mnt/data-rundong/openvla/runs")                               # Path to directory to store logs & checkpoints
-    adapter_tmp_dir: Path = Path("/mnt/data-rundong/openvla/adapter-tmp")                     # Temporary directory for LoRA weights before fusing
-    task_id: str = "04"                                       # Task ID for Pizza dataset finetune
+    pizza_dir: Path                        # Path to Pizza dataset directory
+    dataset_name: str                            # Name of fine-tuning dataset (e.g., `droid_wipe`)
+    run_root_dir: Path                               # Path to directory to store logs & checkpoints
+    adapter_tmp_dir: Path                   # Temporary directory for LoRA weights before fusing
+    task_id: str                                       # Task ID for Pizza dataset finetune
 
     # Fine-tuning Parameters
     epochs: int = 30                                                 # Number of fine-tuning epochs
@@ -130,7 +130,7 @@ def finetune(cfg: FinetuneConfig) -> None:
     log_path = os.path.join(cfg.run_root_dir, f"id{cfg.task_id}-lr{cfg.learning_rate}.log")
     logger = get_logger(log_path)
     logger.info(f"Fine-tuning OpenVLA Model `{cfg.vla_path}` on `{cfg.dataset_name}`")
-    # print(f"Fine-tuning OpenVLA Model `{cfg.vla_path}` on `{cfg.dataset_name}`")
+    print(f"Fine-tuning OpenVLA Model `{cfg.vla_path}` on `{cfg.dataset_name}`")
 
     # [Validate] Ensure GPU Available & Set Device / Distributed Context
     assert torch.cuda.is_available(), "Fine-tuning assumes at least one GPU is available!"

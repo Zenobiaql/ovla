@@ -1,11 +1,11 @@
 vla_path: "openvla/openvla-7b"                            # Path to OpenVLA model (on HuggingFace Hub)
 
 # Directory Paths
-data_root_dir: Path("datasets/open-x-embodiment")        # Path to Open-X dataset directory
-pizza_dir: Path("/dataset_tmp/simpler_test_data_run/")                        # Path to Pizza dataset directory
+data_root_dir: "datasets/open-x-embodiment"        # Path to Open-X dataset directory
+pizza_dir: "/home/v-qilinzhang/dataset_tmp/simpler_test_data_run/"                       # Path to Pizza dataset directory
 dataset_name: str = "pizza"                                # Name of fine-tuning dataset (e.g., `droid_wipe`)
-run_root_dir: Path("~/ovla/single_finetune/runs/")                               # Path to directory to store logs & checkpoints
-adapter_tmp_dir: Path("~/ovla/single_finetune/adapter-tmp")                     # Temporary directory for LoRA weights before fusing
+run_root_dir: "runs/"                         # Path to directory to store logs & checkpoints
+adapter_tmp_dir: "adapter-tmp/"                  # Temporary directory for LoRA weights before fusing
 task_id: "test"                                       # Task ID for Pizza dataset finetune
 
 # Fine-tuning Parameters
