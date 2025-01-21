@@ -28,7 +28,7 @@ environment: # select the image, clone your code, install the packages
     - y
     - conda init bash
     - source ~/.bashrc
-    - echo $PATH
+    - echo $$PATH
     - conda create --name openvla python=3.10.12
     - y
     - conda activate openvla
