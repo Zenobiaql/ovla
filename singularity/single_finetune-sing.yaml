@@ -1,7 +1,7 @@
 description: Test single finetune pipeline.
 env_defaults:
   NODES: 1 # The number of nodes you want to use
-  GPUS: 2 # number of gpus per node
+  GPUS: 8 # number of gpus per node
   MEM: 40 # gpu memory of each gpu, not important
 
 target:
@@ -23,6 +23,8 @@ storage: # mount the storage container
 environment: # select the image, clone your code, install the packages
   image: base/job/pytorch/acpt-2.1.2-cuda11.8:20240320T154353549
   setup:
+    - conda init bash
+    - source ~/.bashrc
     - conda create --name openvla python=3.10.12
     - y
     - conda activate openvla
