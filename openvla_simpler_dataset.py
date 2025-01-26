@@ -21,7 +21,7 @@ class PizzaDataset(Dataset):
     
         p = Path(data_root_dir)
         self.data = []
-        for subdir in p.iterdir():
+        for subdir in tqdm(p.iterdir(), desc="Processing subdirectories"):
             for subsubdir in subdir.iterdir():
                 if subsubdir.is_dir():
                     frame_file = subdir / 'frames.npy'
@@ -33,7 +33,7 @@ class PizzaDataset(Dataset):
                     with open(instruction_file, 'r') as f:
                         instruction = f.read()
                         
-                    for i in range(len(actions)):
+                    for i in tqdm(range(len(actions)), desc=f"Processing files in {subdir.name}"):
                         data_pack = {}
                         data_pack["dataset_name"] = "PIZZADATASET"
                         data_pack['action'] = [actions[i]]
