@@ -199,7 +199,6 @@ pydantic==2.8.2
 pydantic_core==2.20.1
 pydash==8.0.5
 Pygments==2.18.0
-PyGObject
 PyHamcrest==2.0.2
 PyJWT==2.3.0
 pykakasi==2.3.0
