@@ -24,7 +24,7 @@ environment: # select the image, clone your code, install the packages
   image: base/job/pytorch/acpt-2.1.2-cuda11.8:20240320T154353549
   setup:
     - conda init bash
-    - source ~/.bashrc
+    - exec bash
     - yes | conda create --name openvla python=3.10.12
     - conda activate openvla
     - git clone https://github.com/Zenobiaql/ovla.git
