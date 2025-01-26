@@ -32,6 +32,7 @@ environment: # select the image, clone your code, install the packages
     - git clone https://github.com/Zenobiaql/ovla.git
     - cd ovla
     - pip install -r requirements.txt
+    - sudo apt-get install pkg-config libdbus-1-dev
   registry: singularitybase.azurecr.io # cached base images under amlt-sing/* seems not usable now, use singularitybase instead
 
 code:
