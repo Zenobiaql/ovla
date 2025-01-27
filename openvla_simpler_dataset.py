@@ -25,9 +25,9 @@ class PizzaDataset(Dataset):
             if subdir.is_dir():
                 for subsubdir in subdir.iterdir():
                     if subsubdir.is_dir():
-                        frame_file = subdir / 'frames.npy'
-                        action_file  = subdir / 'action.npy'
-                        instruction_file = subdir / 'instruction.txt'
+                        frame_file = subsubdir / 'frames.npy'
+                        action_file  = subsubdir / 'action.npy'
+                        instruction_file = subsubdir / 'instruction.txt'
                         
                         frames = np.load(frame_file)
                         actions = np.load(action_file)
