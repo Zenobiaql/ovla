@@ -155,6 +155,8 @@ def finetune(cfg: FinetuneConfig) -> None:
         trust_remote_code=True,
     )
     
+    vla = torch.nn.DataParallel(vla, device_ids=device_ids)
+    
     # Device Placement =>> note that BitsAndBytes automatically handles for quantized training
     if cfg.use_quantization:
         vla = prepare_model_for_kbit_training(vla)
