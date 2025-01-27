@@ -10,7 +10,7 @@ task_id: "openvla_simpler_test"                                       # Task ID 
 
 # Fine-tuning Parameters
 epochs: 30                                                 # Number of fine-tuning epochs
-batch_size: 8                                        # Fine-tuning batch size
+batch_size: 4                                        # Fine-tuning batch size
 max_steps: 318990                                        # Max number of fine-tuning steps
 save_steps: 1000                                          # Interval for checkpoint saving
 learning_rate: 1.5e-5                                     # Fine-tuning learning rate
@@ -20,7 +20,7 @@ shuffle_buffer_size: 100_000                              # Dataloader shuffle b
 
 # LoRA Arguments
 use_lora: True                                           # Whether to use LoRA fine-tuning
-lora_rank: 12                                             # Rank of LoRA weight matrix
+lora_rank: 16                                             # Rank of LoRA weight matrix
 lora_dropout: 0.0                                       # Dropout applied to LoRA weights
 use_quantization: False                                  # Whether to 4-bit quantize VLA for LoRA fine-tuning
                                                                     #   => CAUTION: Reduces memory but hurts performance
