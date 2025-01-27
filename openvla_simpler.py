@@ -155,6 +155,8 @@ def finetune(cfg: FinetuneConfig) -> None:
         trust_remote_code=True,
     )
     
+    device_id = "cuda:" + cfg.device
+    
     # Device Placement =>> note that BitsAndBytes automatically handles for quantized training
     if cfg.use_quantization:
         vla = prepare_model_for_kbit_training(vla)
