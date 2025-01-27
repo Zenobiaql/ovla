@@ -155,14 +155,14 @@ def finetune(cfg: FinetuneConfig) -> None:
         trust_remote_code=True,
     )
     
+    vla = torch.nn.DataParallel(vla, device_ids=device_ids)
+    
     # Device Placement =>> note that BitsAndBytes automatically handles for quantized training
     if cfg.use_quantization:
         vla = prepare_model_for_kbit_training(vla)
     else:
         vla = vla.to(torch.device("cuda:0"))
     print("devices:", device_ids)
-    
-    vla = torch.nn.DataParallel(vla, device_ids=device_ids)
 
     # [LoRA] Wrap Model w/ PEFT `LoraConfig` =>> by default we set `target_modules=all-linear`
     if cfg.use_lora:
