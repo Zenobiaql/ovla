@@ -160,7 +160,7 @@ def finetune(cfg: FinetuneConfig) -> None:
     if cfg.use_quantization:
         vla = prepare_model_for_kbit_training(vla)
     else:
-        vla = vla.to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
+        vla = vla.to(torch.device("cuda:0"))
     print("devices:", device_ids)
 
     # [LoRA] Wrap Model w/ PEFT `LoraConfig` =>> by default we set `target_modules=all-linear`
