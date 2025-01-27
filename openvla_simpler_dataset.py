@@ -22,27 +22,32 @@ class PizzaDataset(Dataset):
         p = Path(data_root_dir)
         self.data = []
         for subdir in tqdm(p.iterdir(), desc="Processing subdirectories"):
-            for subsubdir in subdir.iterdir():
-                if subsubdir.is_dir():
-                    frame_file = subdir / 'frames.npy'
-                    action_file  = subdir / 'action.npy'
-                    instruction_file = subdir / 'instruction.txt'
-                    
-                    frames = np.load(frame_file)
-                    actions = np.load(action_file)
-                    with open(instruction_file, 'r') as f:
-                        instruction = f.read()
+            if subdir.is_dir():
+                for subsubdir in subdir.iterdir():
+                    if subsubdir.is_dir():
+                        frame_file = subdir / 'frames.npy'
+                        action_file  = subdir / 'action.npy'
+                        instruction_file = subdir / 'instruction.txt'
                         
-                    for i in tqdm(range(len(actions)), desc=f"Processing files in {subdir.name}"):
-                        data_pack = {}
-                        data_pack["dataset_name"] = "PIZZADATASET"
-                        data_pack['action'] = [actions[i]]
-                        data_pack["observation"] = {}
-                        data_pack["observation"]["image_primary"] = [frames[i]]
-                        data_pack["task"] = {}
-                        data_pack["task"]["language_instruction"] = instruction
-                        self.data.append(data_pack)
-        
+                        frames = np.load(frame_file)
+                        actions = np.load(action_file)
+                        with open(instruction_file, 'r') as f:
+                            instruction = f.read()
+                            
+                        for i in tqdm(range(len(actions)), desc=f"Processing files in {subdir.name}"):
+                            data_pack = {}
+                            data_pack["dataset_name"] = "PIZZADATASET"
+                            data_pack['action'] = [actions[i]]
+                            data_pack["observation"] = {}
+                            data_pack["observation"]["image_primary"] = [frames[i]]
+                            data_pack["task"] = {}
+                            data_pack["task"]["language_instruction"] = instruction
+                            self.data.append(data_pack)
+                    else:
+                        pass
+            else:
+                pass
+                      
     def __len__(self):
         return len(self.data)
     
