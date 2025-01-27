@@ -55,5 +55,6 @@ jobs:
 
     command:
       - cd ovla
+      - source activate base
       - conda activate openvla
       - torchrun --standalone --nnodes 1 --nproc-per-node 8 openvla_simpler.py --config_path=vla-configs/openvla_simpler_config.yml
