@@ -2,7 +2,7 @@ description: Test single finetune pipeline.
 env_defaults:
   NODES: 1 # The number of nodes you want to use
   GPUS: 8 # number of gpus per node
-  MEM: 40 # gpu memory of each gpu, not important
+  MEM: 80 # gpu memory of each gpu, not important
 
 target:
   service: sing # for singularity, no need to change
