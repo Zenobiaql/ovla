@@ -36,6 +36,11 @@ from torch.utils.data import DataLoader
 from transformers import AutoModelForVision2Seq, AutoProcessor, BitsAndBytesConfig
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
+import torch.multiprocessing as mp
+from torch.utils.data.distributed import DistributedSampler
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.distributed import init_process_group, destroy_process_group
+
 # import wandb
 from prismatic.models.backbones.llm.prompting import PurePromptBuilder, VicunaV15ChatPromptBuilder
 from prismatic.util.data_utils import PaddedCollatorForActionPrediction
@@ -66,7 +71,9 @@ def get_logger(file_path):
     
     return logger
     
-
+def ddp_setup():
+    torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
+    init_process_group(backend="nccl")
 
 @dataclass
 class FinetuneConfig:
@@ -110,6 +117,7 @@ class FinetuneConfig:
 
 @draccus.wrap()
 def finetune(cfg: FinetuneConfig) -> None:
+    ddp_setup()
     log_path = os.path.join(cfg.run_root_dir, f"id{cfg.task_id}-lr{cfg.learning_rate}.log")
     logger = get_logger(log_path)
     logger.info(f"Fine-tuning OpenVLA Model `{cfg.vla_path}` on `{cfg.dataset_name}`")
@@ -118,7 +126,7 @@ def finetune(cfg: FinetuneConfig) -> None:
     # [Validate] Ensure GPU Available & Set Device / Distributed Context
     assert torch.cuda.is_available(), "Fine-tuning assumes at least one GPU is available!"
     # distributed_state = PartialState()
-    device_ids = list(range(torch.cuda.device_count()))
+    device_id = int(os.environ["LOCAL_RANK"])
     """Would the model be finetuned on a single GPU?"""
 
     # Configure Unique Experiment ID & Log Directory
@@ -155,14 +163,14 @@ def finetune(cfg: FinetuneConfig) -> None:
         trust_remote_code=True,
     )
     
-    device_id = "cuda:" + cfg.device
+    device_id = "cuda:" + int(os.environ["LOCAL_RANK"])
     
     # Device Placement =>> note that BitsAndBytes automatically handles for quantized training
     if cfg.use_quantization:
         vla = prepare_model_for_kbit_training(vla)
     else:
-        vla = vla.to(torch.device("cuda:0"))
-    print("devices:", device_ids)
+        vla = vla.to(device_id)
+    print("devices:", device_id)
 
     # [LoRA] Wrap Model w/ PEFT `LoraConfig` =>> by default we set `target_modules=all-linear`
     if cfg.use_lora:
@@ -355,6 +363,8 @@ def finetune(cfg: FinetuneConfig) -> None:
             os.makedirs(model_param_dir, exist_ok=True)
             processor.save_pretrained(model_param_dir)
             merged_vla.save_pretrained(model_param_dir)
+    
+    destroy_process_group()
         
 
 
