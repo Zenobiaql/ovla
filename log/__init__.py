@@ -1,0 +1,1 @@
+from .simpler_log import SetupLogging
