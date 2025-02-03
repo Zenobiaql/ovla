@@ -10,7 +10,7 @@ task_id: "openvla_simpler_test"                                       # Task ID 
 
 # Fine-tuning Parameters
 epochs: 30                                                 # Number of fine-tuning epochs
-batch_size: 4                                        # Fine-tuning batch size
+batch_size: 32                                        # Fine-tuning batch size
 max_steps: 318990                                        # Max number of fine-tuning steps
 save_steps: 1000                                          # Interval for checkpoint saving
 learning_rate: 1.5e-5                                     # Fine-tuning learning rate
