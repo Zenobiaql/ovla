@@ -57,4 +57,4 @@ jobs:
       - cd ovla
       - source activate base
       - conda activate openvla
-      - torchrun --standalone --nnodes 1 --nproc-per-node 1 openvla_simpler.py --config_path=vla-configs/openvla_simpler_config.yml
+      - torchrun --standalone --nproc_per_node=8 openvla_simpler.py --config_path=vla-configs/openvla_simpler_config.yml
