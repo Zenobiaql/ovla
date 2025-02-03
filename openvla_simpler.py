@@ -40,6 +40,7 @@ import torch.multiprocessing as mp
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
+import torch.distributed as dist
 
 # import wandb
 from prismatic.models.backbones.llm.prompting import PurePromptBuilder, VicunaV15ChatPromptBuilder
@@ -73,7 +74,8 @@ def get_logger(file_path):
     
 def ddp_setup():
     torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
-    init_process_group(backend="nccl")
+    if not dist.is_initialized():
+        init_process_group(backend='nccl')
 
 @dataclass
 class FinetuneConfig:
