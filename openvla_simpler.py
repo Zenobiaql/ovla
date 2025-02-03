@@ -251,7 +251,7 @@ def finetune(cfg: FinetuneConfig) -> None:
         pizza_data,
         batch_size=cfg.batch_size,
         shuffle=True,
-        sampler=None,
+        sampler=DistributedSampler(pizza_data),
         collate_fn=collator,
         num_workers=4,  # Important =>> Set to 0 if using RLDS; TFDS rolls its own parallelism!
     )
