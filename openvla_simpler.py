@@ -165,7 +165,7 @@ def finetune(cfg: FinetuneConfig) -> None:
         trust_remote_code=True,
     )
     
-    device_id = "cuda:" + int(os.environ["LOCAL_RANK"])
+    device_id = "cuda:" + str(int(os.environ["LOCAL_RANK"]))
     
     # Device Placement =>> note that BitsAndBytes automatically handles for quantized training
     if cfg.use_quantization:
