@@ -165,7 +165,9 @@ def finetune(cfg: FinetuneConfig) -> None:
         trust_remote_code=True,
     )
     
-    device_id = "cuda:" + str(int(os.environ["LOCAL_RANK"]))
+    rank = dist.get_rank()
+    print(f"Start running basic DDP example on rank {rank}.")
+    device_id = rank
     
     # Device Placement =>> note that BitsAndBytes automatically handles for quantized training
     if cfg.use_quantization:
@@ -188,7 +190,7 @@ def finetune(cfg: FinetuneConfig) -> None:
 
     """If the model should be finetuned on multiple GPU, wrap the model with DDP"""
     # Wrap VLA in PyTorch DDP Wrapper for Multi-GPU Training
-    vla = DDP(vla, device_ids=[device_id], find_unused_parameters=True, gradient_as_bucket_view=True)
+    vla = DDP(vla, device_ids=[device_id])
 
     # Create Optimizer =>> note that we default to a simple constant learning rate!
     # for params in vla.parameters():
@@ -366,7 +368,8 @@ def finetune(cfg: FinetuneConfig) -> None:
             processor.save_pretrained(model_param_dir)
             merged_vla.save_pretrained(model_param_dir)
     
-    destroy_process_group()
+    dist.destroy_process_group()
+    print(f"Finished running basic DDP example on rank {rank}.")
         
 
 
