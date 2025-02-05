@@ -6,7 +6,7 @@ run_root_dir: "/mnt/data-qilin/openvla_simpler_cl/0205-TestCLSetting/"
 adapter_tmp_dir: "/mnt/data-qilin/openvla_simpler_cl/0205-TestCLSetting/adapter-tmp/"                                                      
 
 epochs: 30                                                
-batch_size: 32                                        
+batch_size: 24                                        
 
 save_steps: 1000                                          
 learning_rate: 1.5e-5                                     
