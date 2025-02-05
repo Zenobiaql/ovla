@@ -34,7 +34,7 @@ from openvla_simpler_dataset import PizzaDataset
 def ddp_setup():
     torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
     if not dist.is_initialized():
-        dist.init_process_group("nccl")
+        dist.init_process_group(backend='nccl', timeout=torch.distributed.timedelta(seconds=3600))
 
 # Logger setup
 def get_logger(file_path):
