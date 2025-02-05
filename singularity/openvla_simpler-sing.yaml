@@ -41,7 +41,7 @@ data:
   storage_id: my_output
 
 jobs:
-  - name: openvla-simpler-test # the job name you will see on the portal. Though not important, you'd better carefully set it for clarity.
+  - name: openvla-simpler-continual-learning-test # the job name you will see on the portal. Though not important, you'd better carefully set it for clarity.
     sku: ${NODES}x${MEM}G${GPUS}-A100-IB # determinate the GPU you will use, please refer to the official docs for more information 
     process_count_per_node: 1 # usually 1
     sla_tier: Premium # Premium, Standard, Basic. corresponding to the priority.
@@ -57,4 +57,4 @@ jobs:
       - cd ovla
       - source activate base
       - conda activate openvla
-      - torchrun --standalone --nproc_per_node=8 openvla_simpler.py --config_path=vla-configs/openvla_simpler_config.yml
+      - torchrun --standalone --nproc_per_node=8 openvla_simpler_cl_sing.py --config_path=vla-configs/openvla_simpler_cl_config.yml
