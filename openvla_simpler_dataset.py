@@ -23,11 +23,11 @@ class PizzaDataset(Dataset):
         self.data = []
         for subdir in tqdm(p.iterdir(), desc="Processing subdirectories"):
             if subdir.is_dir():
-                for subsubdir in subdir.iterdir():
-                    if subsubdir.is_dir():
-                        frame_file = subsubdir / 'frames.npy'
-                        action_file  = subsubdir / 'action.npy'
-                        instruction_file = subsubdir / 'instruction.txt'
+#                for subsubdir in subdir.iterdir():
+#                   if subsubdir.is_dir():
+                        frame_file = subdir / 'frames.npy'
+                        action_file  = subdir / 'action.npy'
+                        instruction_file = subdir / 'instruction.txt'
                         
                         frames = np.load(frame_file)
                         actions = np.load(action_file)
@@ -43,8 +43,8 @@ class PizzaDataset(Dataset):
                             data_pack["task"] = {}
                             data_pack["task"]["language_instruction"] = instruction
                             self.data.append(data_pack)
-                    else:
-                        pass
+#                    else:
+#                        pass
             else:
                 pass
                       

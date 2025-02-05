@@ -1,0 +1,18 @@
+vla_path: "openvla/openvla-7b"                          
+
+pizza_dir: "/mnt/data-xiaofan/robot_dataset/simpler_data/"                       
+dataset_name: str = "pizza"                                
+run_root_dir: "/mnt/data-qilin/openvla_simpler_cl/0205-TestCLSetting/"                         
+adapter_tmp_dir: "/mnt/data-qilin/openvla_simpler_cl/0205-TestCLSetting/adapter-tmp/"                                                      
+
+epochs: 30                                                
+batch_size: 32                                        
+
+save_steps: 1000                                          
+learning_rate: 1.5e-5                                     
+grad_accumulation_steps: 1                            
+image_aug: True                                          
+
+use_lora: True                                          
+lora_rank: 16                                            
+lora_dropout: 0.0                                                                       
