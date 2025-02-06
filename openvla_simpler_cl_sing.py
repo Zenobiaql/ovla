@@ -1,5 +1,5 @@
 """
-A simple script for finetuning openvla on several simpler datasets with DDP.
+A simple script for finetuning openvla in incremental learning setting on several simpler datasets with DDP.
 """
 
 import os
@@ -16,7 +16,7 @@ from transformers import AutoModelForVision2Seq, AutoProcessor
 from peft import LoraConfig, PeftModel, get_peft_model
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import AdamW
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from transformers import AutoModelForVision2Seq, AutoProcessor
 from transformers.modeling_outputs import CausalLMOutputWithPast
 from torch.utils.data.distributed import DistributedSampler
@@ -29,6 +29,7 @@ from dataclasses import dataclass
 from collections import deque
 
 from openvla_simpler_dataset import PizzaDataset
+import random
 
 # DDP process group setup
 def ddp_setup():
@@ -129,6 +130,7 @@ class ModelTrain:
         self.vla_path = vla_path
         self.batch_size = batch_size
         self.device_id = device_id
+        
     def train_step(self):
         for epoch in tqdm.tqdm(range(self.epochs)):
             self.vla.train()
@@ -208,8 +210,48 @@ class ModelTrain:
                     os.makedirs(save_dir, exist_ok=True)
                     self.processor.save_pretrained(os.path.join(save_dir, f'epoch{epoch}'))
                     self.vla.module.save_pretrained(os.path.join(save_dir, f'epoch{epoch}'))
+    
+    # val_dataloader_set should be a dictionary of dataloaders for each trained task(including current task)
+    def validate_step(self, val_dataloader_set):
+        self.vla.eval()
         
+        with torch.no_grad():
+            for val_dataset_name, val_dataloader in val_dataloader_set.items():
+                if dist.get_rank() == 0:
+                    self.logger.info(f"Validation after training on task {self.task_id}")
+                    print(f"Validation after training on task {self.task_id}")
+                    
+                total_loss = 0
+                total_accuracy = 0
+                    
+                for batch in tqdm.tqdm(val_dataloader, desc="Validation"):
+                    output: CausalLMOutputWithPast = self.vla(
+                        input_ids=batch["input_ids"].to(self.device_id),
+                        attention_mask=batch["attention_mask"].to(self.device_id),
+                        pixel_values=batch["pixel_values"].to(torch.bfloat16).to(self.device_id),
+                        labels=batch["labels"],
+                    )
+                    loss = output.loss
+                    total_loss += loss.item()
+                    
+                    action_logits = output.logits[:, self.vla.module.vision_backbone.featurizer.patch_embed.num_patches : -1]
+                    action_preds = action_logits.argmax(dim=2)
+                    action_gt = batch["labels"][:, 1:].to(action_preds.device)
+                    mask = action_gt > self.action_tokenizer.action_token_begin_idx
+                    correct_preds = (action_preds == action_gt) & mask
+                    action_accuracy = correct_preds.sum().float() / mask.sum().float()
+                    total_accuracy += action_accuracy.item()
+                    
+                avg_loss = total_loss / len(val_dataloader)
+                avg_accuracy = total_accuracy / len(val_dataloader)
+                if dist.get_rank() == 0:
+                    print(f"Validation on {val_dataset_name}, Loss: {avg_loss}, Accuracy: {avg_accuracy}")
+                    self.logger.info(f"Validation on {val_dataset_name}, Loss: {avg_loss}, Accuracy: {avg_accuracy}")
             
+            if dist.get_rank() == 0:
+                print(f"Validation on task {self.task_id} finished") 
+                self.logger.info(f"Validation on task {self.task_id} finished")        
+                
 
 @draccus.wrap()
 def finetune(cfg: FinetuneConfig)->None:
@@ -272,6 +314,7 @@ def finetune(cfg: FinetuneConfig)->None:
         processor.tokenizer.model_max_length, processor.tokenizer.pad_token_id, padding_side="right"
     )
     
+    val_dataloader_set = {}
 
     data_root_dir = Path(cfg.pizza_dir)
     for task in tqdm.tqdm(data_root_dir.iterdir(), desc="Incremental Training"):
@@ -284,6 +327,7 @@ def finetune(cfg: FinetuneConfig)->None:
                     os.makedirs(task_run_dir, exist_ok=True)
                     os.makedirs(task_adapter_dir, exist_ok=True)
 
+                # current task dataset
                 task_data = PizzaDataset(
                     str(task),
                     action_tokenizer,
@@ -291,15 +335,34 @@ def finetune(cfg: FinetuneConfig)->None:
                     processor.image_processor.apply_transform,
                     prompt_builder_fn=PurePromptBuilder if "v01" not in cfg.vla_path else VicunaV15ChatPromptBuilder,
                 )
-
+                
+                # divide dataset into train and validation set
+                indices = list(range(len(task_data)))
+                random.shuffle(indices)
+                
+                train_ratio = 0.8
+                train_size = int(train_ratio * len(indices))
+                train_indices = indices[:train_size]
+                val_indices = indices[train_size:]
+                
                 dataloader = DataLoader(
-                    task_data,
+                    Subset(task_data, train_indices),
                     batch_size=cfg.batch_size,
-                    shuffle=False,
                     sampler=DistributedSampler(task_data),
                     collate_fn=collator,
                     num_workers=4,
                 )
+                
+                val_dataloader = DataLoader(
+                    Subset(task_data, val_indices),
+                    batch_size=cfg.batch_size,
+                    sampler=DistributedSampler(task_data),
+                    collate_fn=collator,
+                    num_workers=4,
+                )
+                
+                # add validation dataloader of current task to the set
+                val_dataloader_set[task.name] = val_dataloader
     
                 model_train = ModelTrain(
                     cfg.epochs, 
@@ -324,6 +387,8 @@ def finetune(cfg: FinetuneConfig)->None:
                 )
 
                 model_train.train_step()
+                
+                model_train.validate_step(val_dataloader_set)
                 
             else:
                 pass
