@@ -241,11 +241,20 @@ class ModelTrain:
                     correct_preds = (action_preds == action_gt) & mask
                     action_accuracy = correct_preds.sum().float() / mask.sum().float()
                     total_accuracy += action_accuracy.item()
+
+                    continuous_actions_pred = torch.tensor(
+                    self.action_tokenizer.decode_token_ids_to_actions(action_preds[mask].cpu().numpy())
+                    )
+                    continuous_actions_gt = torch.tensor(
+                    self.action_tokenizer.decode_token_ids_to_actions(action_gt[mask].cpu().numpy())
+                    )
+                    action_l1_loss = torch.nn.functional.l1_loss(continuous_actions_pred, continuous_actions_gt)
                     
                 avg_loss = total_loss / len(val_dataloader)
                 avg_accuracy = total_accuracy / len(val_dataloader)
+                avg_action_l1_loss = action_l1_loss / len(val_dataloader)
                 print(f"Validation on {val_dataset_name}, Loss: {avg_loss}, Accuracy: {avg_accuracy}")
-                self.logger.info(f"Validation on {val_dataset_name}, Loss: {avg_loss}, Accuracy: {avg_accuracy}")
+                self.logger.info(f"Validation on {val_dataset_name}, Loss: {avg_loss}, Accuracy: {avg_accuracy}, L1 Loss: {avg_action_l1_loss}")
             
             if dist.get_rank() == 0:
                 print(f"Validation on task {self.task_id} finished") 
@@ -270,7 +279,7 @@ def finetune(cfg: FinetuneConfig)->None:
         print(f"Training setting batch size {cfg.batch_size}, learning rate {cfg.learning_rate}")
 
     exp_id = (
-        f"{cfg.vla_path.split('/')[-1]}+{cfg.dataset_name}"
+        f"{cfg.vla_path}+{cfg.dataset_name}"
         f"+b{cfg.batch_size * cfg.grad_accumulation_steps}"
         f"+lr-{cfg.learning_rate}"
     )
