@@ -5,7 +5,7 @@ dataset_name: "simpler"
 run_root_dir: "/mnt/data-qilin/openvla_simpler_cl/0206-CLSetting/"                         
 adapter_tmp_dir: "/mnt/data-qilin/openvla_simpler_cl/0206-CLSetting/adapter-tmp/"                                                      
 
-epochs: 15                                                
+epochs: 10                                                
 batch_size: 3                                        
 
 save_steps: 1000                                          
