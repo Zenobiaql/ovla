@@ -1,9 +1,9 @@
-vla_path: "openvla/openvla-7b"                          
+vla_path: "/mnt/data-qilin/openvla-7b/"                          
 
 pizza_dir: "/mnt/data-xiaofan/robot_dataset/simpler_data/"                       
-dataset_name: str = "pizza"                                
-run_root_dir: "/mnt/data-qilin/openvla_simpler_cl/0205-TestCLSetting/"                         
-adapter_tmp_dir: "/mnt/data-qilin/openvla_simpler_cl/0205-TestCLSetting/adapter-tmp/"                                                      
+dataset_name: "simpler"                                
+run_root_dir: "/mnt/data-qilin/openvla_simpler_cl/0206-CLSetting/"                         
+adapter_tmp_dir: "/mnt/data-qilin/openvla_simpler_cl/0206-CLSetting/adapter-tmp/"                                                      
 
 epochs: 15                                                
 batch_size: 3                                        

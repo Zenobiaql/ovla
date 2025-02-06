@@ -192,16 +192,16 @@ class ModelTrain:
                     save_dir = self.adapter_dir
                     self.processor.save_pretrained(os.path.join(save_dir, f'epoch{epoch}'))
                     self.vla.module.save_pretrained(os.path.join(save_dir, f'epoch{epoch}'))
-#                    base_vla = AutoModelForVision2Seq.from_pretrained(
-#                        self.vla_path, torch_dtype=torch.bfloat16, low_cpu_mem_usage=True, trust_remote_code=True
-#                    )
-#                    merged_vla = PeftModel.from_pretrained(base_vla, os.path.join(save_dir, f'epoch{epoch}'))
-#                    merged_vla = merged_vla.merge_and_unload()
+                    base_vla = AutoModelForVision2Seq.from_pretrained(
+                        self.vla_path, torch_dtype=torch.bfloat16, low_cpu_mem_usage=True, trust_remote_code=True
+                    )
+                    merged_vla = PeftModel.from_pretrained(base_vla, os.path.join(save_dir, f'epoch{epoch}'))
+                    merged_vla = merged_vla.merge_and_unload()
                 
-#                    model_param_dir = os.path.join(self.run_dir, "merged", f"epoch{epoch}")
-#                    os.makedirs(model_param_dir, exist_ok=True)
-#                    self.processor.save_pretrained(model_param_dir)
-#                    merged_vla.save_pretrained(model_param_dir)
+                    model_param_dir = os.path.join(self.run_dir, "merged", f"epoch{epoch}")
+                    os.makedirs(model_param_dir, exist_ok=True)
+                    self.processor.save_pretrained(model_param_dir)
+                    merged_vla.save_pretrained(model_param_dir)
 
             else:
                 if self.device_id == 0:
@@ -244,9 +244,8 @@ class ModelTrain:
                     
                 avg_loss = total_loss / len(val_dataloader)
                 avg_accuracy = total_accuracy / len(val_dataloader)
-                if dist.get_rank() == 0:
-                    print(f"Validation on {val_dataset_name}, Loss: {avg_loss}, Accuracy: {avg_accuracy}")
-                    self.logger.info(f"Validation on {val_dataset_name}, Loss: {avg_loss}, Accuracy: {avg_accuracy}")
+                print(f"Validation on {val_dataset_name}, Loss: {avg_loss}, Accuracy: {avg_accuracy}")
+                self.logger.info(f"Validation on {val_dataset_name}, Loss: {avg_loss}, Accuracy: {avg_accuracy}")
             
             if dist.get_rank() == 0:
                 print(f"Validation on task {self.task_id} finished") 
@@ -348,7 +347,7 @@ def finetune(cfg: FinetuneConfig)->None:
                 dataloader = DataLoader(
                     Subset(task_data, train_indices),
                     batch_size=cfg.batch_size,
-                    sampler=DistributedSampler(task_data),
+                    sampler=DistributedSampler(Subset(task_data, train_indices)),
                     collate_fn=collator,
                     num_workers=4,
                 )
@@ -356,7 +355,7 @@ def finetune(cfg: FinetuneConfig)->None:
                 val_dataloader = DataLoader(
                     Subset(task_data, val_indices),
                     batch_size=cfg.batch_size,
-                    sampler=DistributedSampler(task_data),
+                    sampler=DistributedSampler(Subset(task_data, val_indices)),
                     collate_fn=collator,
                     num_workers=4,
                 )
@@ -394,7 +393,7 @@ def finetune(cfg: FinetuneConfig)->None:
                 pass
 
     dist.destroy_process_group()
-    print(f"Finished running basic DDP example on rank {device_id}.")
+    print(f"Finished running code on rank {device_id}.")
 
 if __name__ == "__main__":
     finetune()
