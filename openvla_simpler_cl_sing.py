@@ -279,7 +279,7 @@ def finetune(cfg: FinetuneConfig)->None:
         print(f"Training setting batch size {cfg.batch_size}, learning rate {cfg.learning_rate}")
 
     exp_id = (
-        f"{cfg.vla_path}+{cfg.dataset_name}"
+        f"{cfg.dataset_name}"
         f"+b{cfg.batch_size * cfg.grad_accumulation_steps}"
         f"+lr-{cfg.learning_rate}"
     )
