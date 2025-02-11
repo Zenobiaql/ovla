@@ -2,15 +2,15 @@ vla_path: "/mnt/data-qilin/openvla-7b/"
 
 pizza_dir: "/mnt/data-xiaofan/robot_dataset/simpler_data/"                       
 dataset_name: "simpler"                                
-run_root_dir: "/mnt/data-qilin/openvla_simpler_cl/0207-CL/"                         
-adapter_tmp_dir: "/mnt/data-qilin/openvla_simpler_cl/0207-CL/adapter/"                                                      
+run_root_dir: "/mnt/data-qilin/openvla_simpler_cl/0211-CL/"                         
+adapter_tmp_dir: "/mnt/data-qilin/openvla_simpler_cl/0211-CL/adapter/"                                                      
 
 epochs: 15                                                
 batch_size: 2                                        
 
 save_steps: 1000                                          
 learning_rate: 1.5e-5                                     
-grad_accumulation_steps: 1                            
+grad_accumulation_steps: 2                            
 image_aug: True                                          
 
 use_lora: True                                          
