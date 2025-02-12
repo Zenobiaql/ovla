@@ -264,7 +264,12 @@ class ModelTrain:
                     save_dir = os.path.join(self.run_dir, "fullfinetune")
                     os.makedirs(save_dir, exist_ok=True)
                     self.processor.save_pretrained(os.path.join(save_dir, f'epoch{epoch}'))
-                    self.vla.module.save_pretrained(os.path.join(save_dir, f'epoch{epoch}'))        
+                    self.vla.module.save_pretrained(os.path.join(save_dir, f'epoch{epoch}'))
+
+    def update_vla(self):
+        new_vla = self.vla
+
+        return new_vla        
                 
 
 @draccus.wrap()
@@ -405,6 +410,7 @@ def finetune(cfg: FinetuneConfig)->None:
                 )
 
                 model_train.train_step()
+                vla = model_train.update_vla()
                 
             else:
                 pass
