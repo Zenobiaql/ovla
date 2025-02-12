@@ -98,6 +98,7 @@ class ModelTrain:
         run_dir,
         adapter_dir,
         logger,
+        val_logger,
 
         # model training settings
         optimizer, 
@@ -109,6 +110,7 @@ class ModelTrain:
 
         # data loader settings
         dataloader,
+        val_dataloader_set,
         task_id,
         
         # device settings
@@ -119,9 +121,11 @@ class ModelTrain:
         self.optimizer = optimizer
         self.vla = vla
         self.dataloader = dataloader
+        self.val_dataloader_set = val_dataloader_set
         self.grad_accumulation_steps = grad_accumulation_steps
         self.action_tokenizer = action_tokenizer
         self.logger = logger
+        self.val_logger = val_logger
         self.use_lora = use_lora
         self.processor = processor
         self.run_dir = run_dir
@@ -130,7 +134,59 @@ class ModelTrain:
         self.vla_path = vla_path
         self.batch_size = batch_size
         self.device_id = device_id
+    
+    # val_dataloader_set should be a dictionary of dataloaders for each trained task(including current task)
+    def _validate_step(self):
+        self.vla.eval()
         
+        with torch.no_grad():
+            for val_dataset_name, val_dataloader in self.val_dataloader_set.items():
+                if dist.get_rank() == 0:
+                    self.val_logger.info("")
+                    self.val_logger.info(f"Validation after training on task {self.task_id}.")
+                    self.val_logger.info("")
+                    print(f"Validation after training on task {self.task_id}")
+                    
+                total_loss = 0
+                total_accuracy = 0
+                    
+                for batch in tqdm.tqdm(val_dataloader, desc="Validation"):
+                    output: CausalLMOutputWithPast = self.vla(
+                        input_ids=batch["input_ids"].to(self.device_id),
+                        attention_mask=batch["attention_mask"].to(self.device_id),
+                        pixel_values=batch["pixel_values"].to(torch.bfloat16).to(self.device_id),
+                        labels=batch["labels"],
+                    )
+                    loss = output.loss
+                    total_loss += loss.item()
+                    
+                    action_logits = output.logits[:, self.vla.module.vision_backbone.featurizer.patch_embed.num_patches : -1]
+                    action_preds = action_logits.argmax(dim=2)
+                    action_gt = batch["labels"][:, 1:].to(action_preds.device)
+                    mask = action_gt > self.action_tokenizer.action_token_begin_idx
+                    correct_preds = (action_preds == action_gt) & mask
+                    action_accuracy = correct_preds.sum().float() / mask.sum().float()
+                    total_accuracy += action_accuracy.item()
+
+                    continuous_actions_pred = torch.tensor(
+                    self.action_tokenizer.decode_token_ids_to_actions(action_preds[mask].cpu().numpy())
+                    )
+                    continuous_actions_gt = torch.tensor(
+                    self.action_tokenizer.decode_token_ids_to_actions(action_gt[mask].cpu().numpy())
+                    )
+                    action_l1_loss = torch.nn.functional.l1_loss(continuous_actions_pred, continuous_actions_gt)
+                    
+                avg_loss = total_loss / len(val_dataloader)
+                avg_accuracy = total_accuracy / len(val_dataloader)
+                avg_action_l1_loss = action_l1_loss / len(val_dataloader)
+                print(f"Validation on {val_dataset_name}, Loss: {avg_loss}, Accuracy: {avg_accuracy}")
+                self.val_logger.info(f"Validation on {val_dataset_name}, Loss: {avg_loss}, Accuracy: {avg_accuracy}, L1 Loss: {avg_action_l1_loss}")
+            
+            if dist.get_rank() == 0:
+                print(f"Validation on task {self.task_id} finished") 
+                self.val_logger.info(f"Validation on task {self.task_id} finished")
+                self.val_logger.info("")
+
     def train_step(self):
         for epoch in tqdm.tqdm(range(self.epochs)):
             self.vla.train()
@@ -186,6 +242,8 @@ class ModelTrain:
                     self.optimizer.step()
                     self.optimizer.zero_grad()
 
+            self._validate_step()
+
             if self.use_lora:
                 if self.device_id == 0:
                     self.logger.info(f"Saving Model Checkpoint for epoch {epoch}")
@@ -206,59 +264,11 @@ class ModelTrain:
             else:
                 if self.device_id == 0:
                     self.logger.info(f"Saving Model Checkpoint for epoch {epoch}")
+                    self.val_logger.info(f"Model Checkpoint for epoch {epoch} saved.")
                     save_dir = os.path.join(self.run_dir, "fullfinetune")
                     os.makedirs(save_dir, exist_ok=True)
                     self.processor.save_pretrained(os.path.join(save_dir, f'epoch{epoch}'))
-                    self.vla.module.save_pretrained(os.path.join(save_dir, f'epoch{epoch}'))
-    
-    # val_dataloader_set should be a dictionary of dataloaders for each trained task(including current task)
-    def validate_step(self, val_dataloader_set):
-        self.vla.eval()
-        
-        with torch.no_grad():
-            for val_dataset_name, val_dataloader in val_dataloader_set.items():
-                if dist.get_rank() == 0:
-                    self.logger.info(f"Validation after training on task {self.task_id}")
-                    print(f"Validation after training on task {self.task_id}")
-                    
-                total_loss = 0
-                total_accuracy = 0
-                    
-                for batch in tqdm.tqdm(val_dataloader, desc="Validation"):
-                    output: CausalLMOutputWithPast = self.vla(
-                        input_ids=batch["input_ids"].to(self.device_id),
-                        attention_mask=batch["attention_mask"].to(self.device_id),
-                        pixel_values=batch["pixel_values"].to(torch.bfloat16).to(self.device_id),
-                        labels=batch["labels"],
-                    )
-                    loss = output.loss
-                    total_loss += loss.item()
-                    
-                    action_logits = output.logits[:, self.vla.module.vision_backbone.featurizer.patch_embed.num_patches : -1]
-                    action_preds = action_logits.argmax(dim=2)
-                    action_gt = batch["labels"][:, 1:].to(action_preds.device)
-                    mask = action_gt > self.action_tokenizer.action_token_begin_idx
-                    correct_preds = (action_preds == action_gt) & mask
-                    action_accuracy = correct_preds.sum().float() / mask.sum().float()
-                    total_accuracy += action_accuracy.item()
-
-                    continuous_actions_pred = torch.tensor(
-                    self.action_tokenizer.decode_token_ids_to_actions(action_preds[mask].cpu().numpy())
-                    )
-                    continuous_actions_gt = torch.tensor(
-                    self.action_tokenizer.decode_token_ids_to_actions(action_gt[mask].cpu().numpy())
-                    )
-                    action_l1_loss = torch.nn.functional.l1_loss(continuous_actions_pred, continuous_actions_gt)
-                    
-                avg_loss = total_loss / len(val_dataloader)
-                avg_accuracy = total_accuracy / len(val_dataloader)
-                avg_action_l1_loss = action_l1_loss / len(val_dataloader)
-                print(f"Validation on {val_dataset_name}, Loss: {avg_loss}, Accuracy: {avg_accuracy}")
-                self.logger.info(f"Validation on {val_dataset_name}, Loss: {avg_loss}, Accuracy: {avg_accuracy}, L1 Loss: {avg_action_l1_loss}")
-            
-            if dist.get_rank() == 0:
-                print(f"Validation on task {self.task_id} finished") 
-                self.logger.info(f"Validation on task {self.task_id} finished")        
+                    self.vla.module.save_pretrained(os.path.join(save_dir, f'epoch{epoch}'))        
                 
 
 @draccus.wrap()
@@ -270,7 +280,9 @@ def finetune(cfg: FinetuneConfig)->None:
 
     current_time = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())
     log_path = os.path.join(cfg.run_root_dir, f"time{current_time}.log")
+    val_log_path = os.path.join(cfg.run_root_dir, f"time{current_time}-validation.log")
     logger = get_logger(log_path)
+    val_logger = get_logger(val_log_path)
 
     if dist.get_rank() == 0:
         logger.info(f"Fine-tuning OpenVLA Model `{cfg.vla_path}` on `{cfg.dataset_name}`")
@@ -380,6 +392,7 @@ def finetune(cfg: FinetuneConfig)->None:
                     task_run_dir,
                     task_adapter_dir,
                     logger,
+                    val_logger,
 
                     optimizer, 
                     vla,
@@ -389,14 +402,13 @@ def finetune(cfg: FinetuneConfig)->None:
                     cfg.use_lora,
 
                     dataloader,
+                    val_dataloader_set,
                     task.name,
                     
                     device_id,
                 )
 
                 model_train.train_step()
-                
-                model_train.validate_step(val_dataloader_set)
                 
             else:
                 pass
