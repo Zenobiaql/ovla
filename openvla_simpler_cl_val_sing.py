@@ -181,11 +181,7 @@ class ModelTrain:
                 avg_action_l1_loss = action_l1_loss / len(val_dataloader)
                 print(f"Validation on {val_dataset_name}, Loss: {avg_loss}, Accuracy: {avg_accuracy}")
                 self.val_logger.info(f"Validation on {val_dataset_name}, Loss: {avg_loss}, Accuracy: {avg_accuracy}, L1 Loss: {avg_action_l1_loss}")
-            
-            if dist.get_rank() == 0:
-                print(f"Validation on task {self.task_id} finished") 
-                self.val_logger.info(f"Validation on task {self.task_id} finished")
-                self.val_logger.info("")
+
 
     def train_step(self):
         for epoch in tqdm.tqdm(range(self.epochs)):
