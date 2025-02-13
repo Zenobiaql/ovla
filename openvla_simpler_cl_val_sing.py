@@ -243,6 +243,7 @@ class ModelTrain:
             if self.use_lora:
                 if self.device_id == 0:
                     self.logger.info(f"Saving Model Checkpoint for epoch {epoch}")
+                    self.val_logger.info(f"Model Checkpoint for epoch {epoch} saved.")
                     save_dir = self.adapter_dir
                     self.processor.save_pretrained(os.path.join(save_dir, f'epoch{epoch}'))
                     self.vla.module.save_pretrained(os.path.join(save_dir, f'epoch{epoch}'))
