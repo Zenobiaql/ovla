@@ -308,7 +308,7 @@ def finetune(cfg: FinetuneConfig)->None:
     if dist.get_rank() == 0:
         os.makedirs(cfg.run_root_dir, exist_ok=True)
 
-    current_time = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())
+    current_time = time.strftime('%Y-%m-%d-%H-%M', time.localtime())
     log_path = os.path.join(cfg.run_root_dir, f"time{current_time}.log")
     val_log_path = os.path.join(cfg.run_root_dir, f"time{current_time}-validation.log")
     logger = get_logger("log", log_path)
