@@ -132,17 +132,23 @@ class ModelTrain:
         self.batch_size = batch_size
         self.device_id = device_id
     
+    def _average_validation_loss(local_loss):
+        loss_tensor = torch.tensor(local_loss, dtype=torch.float32)
+        dist.all_reduce(loss_tensor, op=dist.ReduceOp.SUM)
+        avg_loss = loss_tensor.item() / dist.get_world_size()
+        
+        return avg_loss
+    
     # val_dataloader_set should be a dictionary of dataloaders for each trained task(including current task)
-    def _validate_step(self):
+    def _validate_step(self, num_epoch):
         self.vla.eval()
         
         with torch.no_grad():
             for val_dataset_name, val_dataloader in self.val_dataloader_set.items():
                 if dist.get_rank() == 0:
                     self.val_logger.info("")
-                    self.val_logger.info(f"Validation after training on task {self.task_id}.")
-                    self.val_logger.info("")
-                    print(f"Validation after training on task {self.task_id}")
+                    self.val_logger.info(f"Validation after epoch{num_epoch}:")
+                    print(f"Validation after epoch{num_epoch}:")
                     
                 total_loss = 0
                 total_accuracy = 0
@@ -176,8 +182,17 @@ class ModelTrain:
                 avg_loss = total_loss / len(val_dataloader)
                 avg_accuracy = total_accuracy / len(val_dataloader)
                 avg_action_l1_loss = action_l1_loss / len(val_dataloader)
-                print(f"Validation on {val_dataset_name}, Loss: {avg_loss}, Accuracy: {avg_accuracy}")
-                self.val_logger.info(f"Validation on {val_dataset_name}, Loss: {avg_loss}, Accuracy: {avg_accuracy}, L1 Loss: {avg_action_l1_loss}")
+                
+                mul_avg_loss = self._average_validation_loss(avg_loss)
+                mul_avg_accuracy = self._average_validation_loss(avg_accuracy)
+                mul_avg_action_l1_loss = self._average_validation_loss(avg_action_l1_loss)
+                
+                if dist.get_rank() == 0:
+                    print(f"On dataset {val_dataset_name}, Loss:{mul_avg_loss:.3f}, Accuracy:{mul_avg_accuracy:.3f}, L1 Loss:{mul_avg_action_l1_loss:.3f}.")
+                    self.val_logger.info(f"On dataset {val_dataset_name}, Loss:{mul_avg_loss:.3f}, Accuracy:{mul_avg_accuracy:.3f}, L1 Loss:{mul_avg_action_l1_loss:.3f}.")
+            
+            if dist.get_rank() == 0:
+                self.val_logger.info("Finished")
 
 
     def train_step(self):
@@ -229,17 +244,19 @@ class ModelTrain:
                 smoothened_l1_loss = sum(recent_l1_losses) / len(recent_l1_losses)
 
                 if batch_idx % 10 == 0:
-                    self.logger.info(f"train_loss: {smoothened_loss}, action_accuracy: {smoothened_action_accuracy}, l1_loss: {smoothened_l1_loss}, step: {gradient_step_idx}")
+                    if dist.get_rank() == 0:
+                        self.logger.info(f"train_loss: {smoothened_loss:.4f}, action_accuracy: {smoothened_action_accuracy:.4f}, l1_loss: {smoothened_l1_loss:.4f}, step: {gradient_step_idx}")
 
                 if (batch_idx + 1) % self.grad_accumulation_steps == 0:
                     self.optimizer.step()
                     self.optimizer.zero_grad()
 
-            self._validate_step()
+            self._validate_step(epoch)
 
             if self.use_lora:
                 if self.device_id == 0:
                     self.logger.info(f"Saving Model Checkpoint for epoch {epoch}")
+                    self.val_logger.info("")
                     self.val_logger.info(f"Model Checkpoint for epoch {epoch} saved.")
                     save_dir = self.adapter_dir
                     self.processor.save_pretrained(os.path.join(save_dir, f'epoch{epoch}'))
@@ -258,6 +275,7 @@ class ModelTrain:
             else:
                 if self.device_id == 0:
                     self.logger.info(f"Saving Model Checkpoint for epoch {epoch}")
+                    self.val_logger.info("")
                     self.val_logger.info(f"Model Checkpoint for epoch {epoch} saved.")
                     save_dir = os.path.join(self.run_dir, "fullfinetune")
                     os.makedirs(save_dir, exist_ok=True)
