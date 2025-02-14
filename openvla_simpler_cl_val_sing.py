@@ -38,19 +38,16 @@ def ddp_setup():
         dist.init_process_group(backend='nccl', timeout=torch.distributed.timedelta(seconds=3600))
 
 # Logger setup
-def get_logger(file_path):
-    rf_handler = logging.StreamHandler()
-    rf_handler.setLevel(logging.INFO)
-    rf_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+def get_logger(name, file_path):
     if file_path is not None:
         f_handler = logging.FileHandler(file_path)
         f_handler.setLevel(logging.INFO)
         f_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
 
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
-    logger.addHandler(rf_handler)
-    if file_path is not None: logger.addHandler(f_handler)
+    if file_path is not None: 
+        logger.addHandler(f_handler)
     
     return logger
 
@@ -283,8 +280,8 @@ def finetune(cfg: FinetuneConfig)->None:
     current_time = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())
     log_path = os.path.join(cfg.run_root_dir, f"time{current_time}.log")
     val_log_path = os.path.join(cfg.run_root_dir, f"time{current_time}-validation.log")
-    logger = get_logger(log_path)
-    val_logger = get_logger(val_log_path)
+    logger = get_logger("log", log_path)
+    val_logger = get_logger("val_log", val_log_path)
 
     if dist.get_rank() == 0:
         logger.info(f"Fine-tuning OpenVLA Model `{cfg.vla_path}` on `{cfg.dataset_name}`")

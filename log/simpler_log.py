@@ -1,17 +1,21 @@
-import os
 import logging
 
-class setup_logging:
-    def __init__(
-        self,
-        run_root_dir: str,
-        
-    )->None:
-        
-    def setup_logger(self,)
+def get_logger(name, file_path):
+    if file_path is not None:
+        f_handler = logging.FileHandler(file_path)
+        f_handler.setLevel(logging.INFO)
+        f_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.INFO)
+    if file_path is not None: 
+        logger.addHandler(f_handler)
     
-    def setup_run_dir(self,)
+    return logger
+
+if __name__ == "__main__":
+    logger1 = get_logger("log1", "log1.txt")
+    logger1.info("This is a log message.")
     
-    def setup_adapter_dir(self,)
-    
-    def setup
+    logger2 = get_logger("log2", "log2.txt")
+    logger2.info("This is another log message.")
