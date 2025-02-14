@@ -159,8 +159,9 @@ class ModelTrain:
                     
                 total_loss = 0
                 total_accuracy = 0
+                total_l1_loss = 0
                     
-                for batch in tqdm.tqdm(val_dataloader, desc="Validation"):
+                for batch in tqdm.tqdm(enumerate(val_dataloader), len(val_dataloader), desc="Validation"):
                     output: CausalLMOutputWithPast = self.vla(
                         input_ids=batch["input_ids"].to(self.device_id),
                         attention_mask=batch["attention_mask"].to(self.device_id),
@@ -185,18 +186,19 @@ class ModelTrain:
                     self.action_tokenizer.decode_token_ids_to_actions(action_gt[mask].cpu().numpy())
                     )
                     action_l1_loss = torch.nn.functional.l1_loss(continuous_actions_pred, continuous_actions_gt)
+                    total_l1_loss += action_l1_loss.item()
                     
                 avg_loss = total_loss / len(val_dataloader)
                 avg_accuracy = total_accuracy / len(val_dataloader)
-                avg_action_l1_loss = action_l1_loss / len(val_dataloader)
+                avg_action_l1_loss = total_l1_loss / len(val_dataloader)
                 
                 mul_avg_loss = self._average_validation_loss(avg_loss)
                 mul_avg_accuracy = self._average_validation_loss(avg_accuracy)
                 mul_avg_action_l1_loss = self._average_validation_loss(avg_action_l1_loss)
                 
                 if dist.get_rank() == 0:
-                    print(f"On dataset {val_dataset_name}, Loss:{mul_avg_loss:.3f}, Accuracy:{mul_avg_accuracy:.3f}, L1 Loss:{mul_avg_action_l1_loss:.3f}.")
-                    self.val_logger.info(f"On dataset {val_dataset_name}, Loss:{mul_avg_loss:.3f}, Accuracy:{mul_avg_accuracy:.3f}, L1 Loss:{mul_avg_action_l1_loss:.3f}.")
+                    print(f"On dataset {val_dataset_name}, Loss:{mul_avg_loss:.4f}, Accuracy:{mul_avg_accuracy:.4f}, L1 Loss:{mul_avg_action_l1_loss:.4f}.")
+                    self.val_logger.info(f"On dataset {val_dataset_name}, Loss:{mul_avg_loss:.4f}, Accuracy:{mul_avg_accuracy:.4f}, L1 Loss:{mul_avg_action_l1_loss:.4f}.")
             
             if dist.get_rank() == 0:
                 self.val_logger.info("Finished")
