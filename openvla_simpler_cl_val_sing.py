@@ -132,14 +132,14 @@ class ModelTrain:
         self.batch_size = batch_size
         self.device_id = device_id
 
-    def _average_training_loss(local_loss):
+    def _average_training_loss(self, local_loss):
         loss_tensor = torch.tensor(local_loss, dtype=torch.float32)
         dist.all_reduce(loss_tensor, op=dist.ReduceOp.SUM)
         avg_loss = loss_tensor.item() / dist.get_world_size()
         
         return avg_loss
     
-    def _average_validation_loss(local_loss):
+    def _average_validation_loss(self, local_loss):
         loss_tensor = torch.tensor(local_loss, dtype=torch.float32)
         dist.all_reduce(loss_tensor, op=dist.ReduceOp.SUM)
         avg_loss = loss_tensor.item() / dist.get_world_size()
