@@ -131,6 +131,13 @@ class ModelTrain:
         self.vla_path = vla_path
         self.batch_size = batch_size
         self.device_id = device_id
+
+    def _average_training_loss(local_loss):
+        loss_tensor = torch.tensor(local_loss, dtype=torch.float32)
+        dist.all_reduce(loss_tensor, op=dist.ReduceOp.SUM)
+        avg_loss = loss_tensor.item() / dist.get_world_size()
+        
+        return avg_loss
     
     def _average_validation_loss(local_loss):
         loss_tensor = torch.tensor(local_loss, dtype=torch.float32)
@@ -242,10 +249,14 @@ class ModelTrain:
                 smoothened_loss = sum(recent_losses) / len(recent_losses)
                 smoothened_action_accuracy = sum(recent_action_accuracies) / len(recent_action_accuracies)
                 smoothened_l1_loss = sum(recent_l1_losses) / len(recent_l1_losses)
+                
+                mul_smoothened_loss = self._average_training_loss(smoothened_loss)
+                mul_smoothened_action_accuracy = self._average_training_loss(smoothened_action_accuracy)
+                mul_smoothened_l1_loss = self._average_training_loss(smoothened_l1_loss)
 
                 if batch_idx % 10 == 0:
                     if dist.get_rank() == 0:
-                        self.logger.info(f"train_loss: {smoothened_loss:.4f}, action_accuracy: {smoothened_action_accuracy:.4f}, l1_loss: {smoothened_l1_loss:.4f}, step: {gradient_step_idx}")
+                        self.logger.info(f"train_loss: {mul_smoothened_loss:.4f}, action_accuracy: {mul_smoothened_action_accuracy:.4f}, l1_loss: {mul_smoothened_l1_loss:.4f}, step: {gradient_step_idx}")
 
                 if (batch_idx + 1) % self.grad_accumulation_steps == 0:
                     self.optimizer.step()
