@@ -161,7 +161,7 @@ class ModelTrain:
                 total_accuracy = 0
                 total_l1_loss = 0
                     
-                for batch in tqdm.tqdm(enumerate(val_dataloader), len(val_dataloader), desc="Validation"):
+                for batch in tqdm.tqdm(enumerate(val_dataloader), total=len(val_dataloader), desc=f"{val_dataset_name}"):
                     output: CausalLMOutputWithPast = self.vla(
                         input_ids=batch["input_ids"].to(self.device_id),
                         attention_mask=batch["attention_mask"].to(self.device_id),
