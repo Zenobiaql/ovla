@@ -152,10 +152,6 @@ class ModelTrain:
         
         with torch.no_grad():
             for val_dataset_name, val_dataloader in self.val_dataloader_set.items():
-                if dist.get_rank() == 0:
-                    self.val_logger.info("")
-                    self.val_logger.info(f"Validation after epoch{num_epoch}:")
-                    print(f"Validation after epoch{num_epoch}:")
                     
                 total_loss = 0
                 total_accuracy = 0
@@ -263,6 +259,11 @@ class ModelTrain:
                 if (batch_idx + 1) % self.grad_accumulation_steps == 0:
                     self.optimizer.step()
                     self.optimizer.zero_grad()
+                    
+            if dist.get_rank() == 0:
+                self.val_logger.info("")
+                self.val_logger.info(f"Validation after epoch{epoch}:")
+                print(f"Validation after epoch{epoch}:")
 
             self._validate_step(epoch)
 
